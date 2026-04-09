@@ -56,8 +56,10 @@ def conv2_gray(img, kers, verbose=True):
 
     for i in range( filteredImg.shape[1] ):
         for j in range( filteredImg.shape[2] ):
-            for k in range(n_kers):
-                filteredImg[k, i, j] = np.sum( kers[k] * paddedImg[k, i : i + ker_y, j : j + ker_x ] )
+            filteredImg[:, i, j] = np.sum(
+                kers[:] * paddedImg[:, i : i + ker_y, j : j + ker_x ],
+                axis=(1, 2)
+            )
     
     return filteredImg
 
@@ -101,11 +103,21 @@ def conv2(img, kers, verbose=True):
         print('Kernels must be square!')
         return
     
+    pad = int( np.ceil( ( ker_x - 1 ) / 2 ) )
     filteredImg = np.zeros( (n_kers, n_chans, img_y, img_x) )
+    paddedImg = np.zeros( ( n_kers, n_chans, int(img_y + pad * 2), int(img_x + pad * 2) ) )
+    paddedImg[ : , : , pad : img_y + pad, pad : img_x + pad] = img
 
-    for i in range(n_chans):
-        filteredImg[ :, i, :, :] = conv2_gray(img[i][:][:], kers, verbose)  
-    
+    # flipping the kernels
+    kers = kers[:, ::-1, ::-1]
+
+    for i in range( filteredImg.shape[2] ):
+        for j in range( filteredImg.shape[3] ):
+            filteredImg[:, :, i, j] = np.sum( 
+                kers[:, np.newaxis, :, :] * paddedImg[ : , : , i : i + ker_y, j : j + ker_x ],
+                axis=(2, 3),
+            )
+
     return filteredImg
 
 def conv2nn(imgs, kers, bias, verbose=True):
@@ -157,13 +169,22 @@ def conv2nn(imgs, kers, bias, verbose=True):
         print('Number of kernel channels doesnt match input num channels!')
         return
     
-    filteredImg = np.zeros( (batch_sz, n_kers, n_chans, img_y, img_x) )
+    pad = int( np.ceil( ( ker_x - 1 ) / 2 ) )
+    paddedImg = np.zeros( ( batch_sz, n_kers, n_chans, int(img_y + pad * 2), int(img_x + pad * 2) ) )
+    paddedImg[ : , : , : , pad : img_y + pad, pad : img_x + pad] = imgs[:, np.newaxis, :, :, :]
+    filteredImg = np.zeros( (batch_sz, n_kers, img_y, img_x) )
 
-    for i in range(batch_sz):
-        for j in range(n_ker_chans):
-            filteredImg[ i, :, j, :, :] = conv2_gray(imgs[i][j][:][:], kers[:, j, :, :], verbose) 
+    # flipping the kernels
+    kers = kers[:, :, ::-1, ::-1]
+
+    for i in range( filteredImg.shape[2] ):
+        for j in range( filteredImg.shape[3] ):
+            filteredImg[:, :, i, j] = np.sum( 
+                kers[np.newaxis, : , :, :, :] * paddedImg[ :, :, :, i : i + ker_y, j : j + ker_x ],
+                axis=(2, 3, 4),
+            ) 
     
-    return np.sum(filteredImg, axis=2) + bias[np.newaxis, :, np.newaxis, np.newaxis]
+    return filteredImg + bias[np.newaxis, :, np.newaxis, np.newaxis]
 
 
 def get_pooling_out_shape(img_dim, pool_size, strides):
