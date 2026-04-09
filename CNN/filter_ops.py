@@ -56,8 +56,7 @@ def conv2_gray(img, kers, verbose=True):
 
     for i in range( filteredImg.shape[1] ):
         for j in range( filteredImg.shape[2] ):
-            for k in range(n_kers):
-                filteredImg[k, i, j] = np.sum( kers[k] * paddedImg[k, i : i + ker_y, j : j + ker_x ] )
+            filteredImg[:, i, j] = np.sum( kers[:] * paddedImg[:, i : i + ker_y, j : j + ker_x ], axis=(1, 2))
     
     return filteredImg
 
