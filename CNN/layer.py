@@ -137,7 +137,10 @@ class Layer:
         -----------
         No return
         '''
-        pass
+        shifted_net_in = self.net_in - np.max( self.net_in, axis=1, keepdims=True )
+        numerator = np.exp( shifted_net_in )
+        denominator = np.sum( numerator, axis= 1, keepdims=True )
+        self.net_act = numerator / denominator
 
     def loss(self, y):
         '''Computes the loss for this layer. Only should be called on the output
