@@ -395,6 +395,13 @@ class Conv2D(Layer):
         control the random weight initialization process).
         '''
         super().__init__(number, name, activation=activation, reg=reg, verbose=verbose)
+        self.ker_sz = ker_sz
+        self.n_chans = n_chans
+        self.n_kers = n_kers
+
+        rng = np.random.default_rng( (r_seed + number) if r_seed else r_seed )
+        self.wts = rng.normal( 0, wt_scale, (n_kers, n_chans, ker_sz, ker_sz))
+        self.b = np.zeros(n_kers)
 
     def compute_net_in(self):
         '''Computes `self.net_in` via convolution.
