@@ -92,7 +92,9 @@ class Layer:
             e.g. if y = [0, 2, 1] and num_classes = 4 we have:
             [[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0]]
         '''
-        pass
+        y_one_hot = np.zeros((y.shape[0], num_classes))
+        y_one_hot[np.arange(y.shape[0]), y] = 1
+        return y_one_hot
 
     def linear(self):
         '''Linear activation function: f(x) = x.
