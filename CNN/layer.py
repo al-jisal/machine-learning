@@ -106,7 +106,7 @@ class Layer:
         -----------
         No return
         '''
-        pass
+        self.net_act = self.net_in
 
     def relu(self):
         '''Rectified linear activation function. f(x) is defined:
