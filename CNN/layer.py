@@ -422,7 +422,7 @@ class Conv2D(Layer):
         Hint:
         This should be an easy one-liner, you've done all the hard work last week :)
         '''
-        pass
+        self.net_in = filter_ops.conv2nn( self.input, self.wts, self.b, False )
 
     def backward_netIn_to_prevLayer_netAct(self, d_upstream):
         '''Computes backward `dprev_net_act`, `d_wts`, d_b` gradients that gets us
