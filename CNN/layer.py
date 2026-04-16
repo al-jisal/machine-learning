@@ -120,7 +120,7 @@ class Layer:
         -----------
         No return
         '''
-        pass
+        self.net_act = np.where(self.net_in > 0, self.net_in, 0)
 
     def softmax(self):
         '''Softmax activation function. See notebook for a refresher on the
