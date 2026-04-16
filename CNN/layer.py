@@ -177,7 +177,12 @@ class Layer:
         -----------
         loss: float. Mean loss over the mini-batch.
         '''
-        pass
+        # number of samples in a mini-batch
+        batch = len(y)
+        # contains the activations for the neurons encoding the correct classes
+        correct_coding = self.net_act[np.arange( batch ) , y ]
+        loss = -1 / batch * np.sum( np.log( correct_coding ) )
+        return loss
 
     def compute_net_in(self):
         '''Computes self.net_in. Always unique to layer type, so subclasses
