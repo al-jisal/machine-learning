@@ -709,7 +709,7 @@ class Dense(Layer):
     def compute_net_in(self):
         '''Computes `self.net_in` via Dense dot product of inputs (like in ADALINE/MLP).
         '''
-        self.net_in = self.n_units_prev_layer @ self.wts + self.b
+        self.net_in = self.input @ self.wts + self.b
 
     def backward_netIn_to_prevLayer_netAct(self, d_upstream):
         '''Computes the `dprev_net_act`, `d_wts`, `d_b` gradients for a Dense layer.
