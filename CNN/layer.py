@@ -433,7 +433,7 @@ class Conv2D(Layer):
         Hint:
         This should be an easy one-liner, you've done all the hard work last week :)
         '''
-        self.net_in = filter_ops.conv2nn( self.input, self.wts, self.b, False )
+        self.net_in = filter_ops.conv2nn( self.input, self.wts, self.b, verbose=self.verbose )
 
     def backward_netIn_to_prevLayer_netAct(self, d_upstream):
         '''Computes backward `dprev_net_act`, `d_wts`, d_b` gradients that gets us
@@ -560,7 +560,7 @@ class MaxPool2D(Layer):
         Hint:
         This should be an easy one-liner, you've done all the hard work last week :)
         '''
-        pass
+        self.net_in = filter_ops.max_poolnn(self.input, self.pool_size, self.strides, verbose=self.verbose)
 
     def backward_netIn_to_prevLayer_netAct(self, d_upstream):
         '''Computes the dprev_net_act gradient, getting us thru the MaxPool2D layer to the layer
