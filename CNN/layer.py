@@ -197,7 +197,15 @@ class Layer:
         Throw an error if the activation function string is not one that you
         implemented.
         '''
-        pass
+        try:
+            if self.activation == "linear":
+                self.linear()
+            elif self.activation == "relu":
+                self.relu()
+            elif self.activation == "softmax":
+                self.softmax()
+        except ValueError:
+            print("Error: the activation function has to be linear, relu, or softmax")
 
     def forward(self, inputs):
         '''Computes the forward pass through this particular layer.
@@ -216,7 +224,10 @@ class Layer:
         -----------
         The net_act.
         '''
-        pass
+        self.input = inputs
+        self.compute_net_in()
+        self.compute_net_act()
+        return self.net_act
 
     def backward(self, d_upstream, y):
         '''Do the backward pass through this layer.
