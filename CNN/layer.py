@@ -628,7 +628,7 @@ class Flatten(Layer):
     def compute_net_in(self):
         '''The net input for the Flatten layer is the input reshaped to be appropriate for processing by a Dense layer.
         '''
-        pass
+        self.net_in = np.reshape( self.input, (self.input.shape[0], -1) )
 
     def backward_netIn_to_prevLayer_netAct(self, d_upstream):
         '''Determines the gradient through the Flatten layer. This amounts to reshaping the upstream gradient to have
