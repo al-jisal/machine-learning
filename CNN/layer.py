@@ -699,11 +699,17 @@ class Dense(Layer):
         control the random weight initialization process).
         '''
         super().__init__(number, name, activation=activation, reg=reg, verbose=verbose)
+        self.units = units
+        self.n_units_prev_layer = n_units_prev_layer
+
+        rng = np.random.default_rng( (r_seed + number) if r_seed else r_seed )
+        self.wts = rng.normal( 0, wt_scale, (self.n_units_prev_layer, self.units))
+        self.b = np.zeros(self.units)
 
     def compute_net_in(self):
         '''Computes `self.net_in` via Dense dot product of inputs (like in ADALINE/MLP).
         '''
-        pass
+        self.net_in = self.n_units_prev_layer @ self.wts + self.b
 
     def backward_netIn_to_prevLayer_netAct(self, d_upstream):
         '''Computes the `dprev_net_act`, `d_wts`, `d_b` gradients for a Dense layer.
