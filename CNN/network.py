@@ -134,7 +134,14 @@ class Network:
         2. Compute and get the weight regularization via `self.wt_reg_reduce()` (implement this next)
         4. Return the sum of the loss and the regularization term.
         '''
-        pass
+        layer_input = inputs
+        for layer in self.layers:
+            layer_input = layer.forward(layer_input)
+        
+        #calculate the loss
+        loss = layer.loss(y)
+        reg_term = self.wt_reg_reduce()
+        return loss + reg_term
 
     def wt_reg_reduce(self):
         '''Computes the loss weight regularization for all network layers that have weights
