@@ -92,7 +92,9 @@ class Layer:
             e.g. if y = [0, 2, 1] and num_classes = 4 we have:
             [[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0]]
         '''
-        pass
+        y_one_hot = np.zeros((y.shape[0], num_classes))
+        y_one_hot[np.arange(y.shape[0]), y] = 1
+        return y_one_hot
 
     def linear(self):
         '''Linear activation function: f(x) = x.
@@ -104,7 +106,7 @@ class Layer:
         -----------
         No return
         '''
-        pass
+        self.net_act = self.net_in
 
     def relu(self):
         '''Rectified linear activation function. f(x) is defined:
@@ -118,7 +120,7 @@ class Layer:
         -----------
         No return
         '''
-        pass
+        self.net_act = np.where(self.net_in > 0, self.net_in, 0)
 
     def softmax(self):
         '''Softmax activation function. See notebook for a refresher on the
@@ -135,7 +137,10 @@ class Layer:
         -----------
         No return
         '''
-        pass
+        shifted_net_in = self.net_in - np.max( self.net_in, axis=1, keepdims=True )
+        numerator = np.exp( shifted_net_in )
+        denominator = np.sum( numerator, axis= 1, keepdims=True )
+        self.net_act = numerator / denominator
 
     def loss(self, y):
         '''Computes the loss for this layer. Only should be called on the output
@@ -172,7 +177,12 @@ class Layer:
         -----------
         loss: float. Mean loss over the mini-batch.
         '''
-        pass
+        # number of samples in a mini-batch
+        batch = len(y)
+        # contains the activations for the neurons encoding the correct classes
+        correct_coding = self.net_act[np.arange( batch ) , y ]
+        loss = -1 / batch * np.sum( np.log( correct_coding ) )
+        return loss
 
     def compute_net_in(self):
         '''Computes self.net_in. Always unique to layer type, so subclasses
@@ -187,7 +197,15 @@ class Layer:
         Throw an error if the activation function string is not one that you
         implemented.
         '''
-        pass
+        try:
+            if self.activation == "linear":
+                self.linear()
+            elif self.activation == "relu":
+                self.relu()
+            elif self.activation == "softmax":
+                self.softmax()
+        except ValueError:
+            print("Error: the activation function has to be linear, relu, or softmax")
 
     def forward(self, inputs):
         '''Computes the forward pass through this particular layer.
@@ -206,7 +224,10 @@ class Layer:
         -----------
         The net_act.
         '''
-        pass
+        self.input = inputs
+        self.compute_net_in()
+        self.compute_net_act()
+        return self.net_act
 
     def backward(self, d_upstream, y):
         '''Do the backward pass through this layer.
@@ -385,6 +406,13 @@ class Conv2D(Layer):
         control the random weight initialization process).
         '''
         super().__init__(number, name, activation=activation, reg=reg, verbose=verbose)
+        self.ker_sz = ker_sz
+        self.n_chans = n_chans
+        self.n_kers = n_kers
+
+        rng = np.random.default_rng( (r_seed + number) if r_seed else r_seed )
+        self.wts = rng.normal( 0, wt_scale, (n_kers, n_chans, ker_sz, ker_sz))
+        self.b = np.zeros(n_kers)
 
     def compute_net_in(self):
         '''Computes `self.net_in` via convolution.
@@ -405,7 +433,7 @@ class Conv2D(Layer):
         Hint:
         This should be an easy one-liner, you've done all the hard work last week :)
         '''
-        pass
+        self.net_in = filter_ops.conv2nn( self.input, self.wts, self.b, verbose=self.verbose )
 
     def backward_netIn_to_prevLayer_netAct(self, d_upstream):
         '''Computes backward `dprev_net_act`, `d_wts`, d_b` gradients that gets us
@@ -532,7 +560,7 @@ class MaxPool2D(Layer):
         Hint:
         This should be an easy one-liner, you've done all the hard work last week :)
         '''
-        pass
+        self.net_in = filter_ops.max_poolnn(self.input, self.pool_size, self.strides, verbose=self.verbose)
 
     def backward_netIn_to_prevLayer_netAct(self, d_upstream):
         '''Computes the dprev_net_act gradient, getting us thru the MaxPool2D layer to the layer
@@ -600,7 +628,7 @@ class Flatten(Layer):
     def compute_net_in(self):
         '''The net input for the Flatten layer is the input reshaped to be appropriate for processing by a Dense layer.
         '''
-        pass
+        self.net_in = np.reshape( self.input, (self.input.shape[0], -1) )
 
     def backward_netIn_to_prevLayer_netAct(self, d_upstream):
         '''Determines the gradient through the Flatten layer. This amounts to reshaping the upstream gradient to have
@@ -671,11 +699,17 @@ class Dense(Layer):
         control the random weight initialization process).
         '''
         super().__init__(number, name, activation=activation, reg=reg, verbose=verbose)
+        self.units = units
+        self.n_units_prev_layer = n_units_prev_layer
+
+        rng = np.random.default_rng( (r_seed + number) if r_seed else r_seed )
+        self.wts = rng.normal( 0, wt_scale, (self.n_units_prev_layer, self.units))
+        self.b = np.zeros(self.units)
 
     def compute_net_in(self):
         '''Computes `self.net_in` via Dense dot product of inputs (like in ADALINE/MLP).
         '''
-        pass
+        self.net_in = self.input @ self.wts + self.b
 
     def backward_netIn_to_prevLayer_netAct(self, d_upstream):
         '''Computes the `dprev_net_act`, `d_wts`, `d_b` gradients for a Dense layer.
