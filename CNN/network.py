@@ -134,7 +134,14 @@ class Network:
         2. Compute and get the weight regularization via `self.wt_reg_reduce()` (implement this next)
         4. Return the sum of the loss and the regularization term.
         '''
-        pass
+        prev_layer_output = inputs
+        for layer in self.layers:
+            prev_layer_output = layer.forward(prev_layer_output)
+        
+        #calculate the loss
+        loss = layer.loss(y)
+        reg_term = self.wt_reg_reduce()
+        return loss + reg_term
 
     def wt_reg_reduce(self):
         '''Computes the loss weight regularization for all network layers that have weights
@@ -148,7 +155,11 @@ class Network:
         The network regularization `wt_reg` is simply the sum of all the regularization terms
         for each individual layer.
         '''
-        pass
+        wt_reg = 0.0
+        for ind in self.wt_layer_inds:
+            wt_reg += self.reg * np.sum(np.square( self.layers[ind].wts ))
+
+        return wt_reg
 
     def backward(self, y):
         '''Initiates the backward pass through all the layers of the network.
@@ -319,3 +330,16 @@ class ConvNet4(Network):
         super().__init__(reg, verbose)
 
         n_chans, h, w = input_shape
+        
+        # layers
+        conv2D_layer = layer.Conv2D(0,"conv2", n_kers[0], ker_sz[0], n_chans=n_chans, wt_scale=wt_scale, activation="relu", reg=reg, r_seed=r_seed, verbose=verbose)
+        maxPool_layer = layer.MaxPool2D(1, "MaxPoolLayer", pooling_sizes[0],pooling_strides[0], verbose=verbose)
+        flatten_layer = layer.Flatten(2, "Flatten", verbose=verbose)
+        hidden_layer = layer.Dense(3, "Dense", dense_interior_units[0], int(n_kers[0]*input_shape[1]/2*input_shape[2]/2), wt_scale, "relu", reg, r_seed, verbose)
+        output_layer = layer.Dense(4, "Dense", n_classes, dense_interior_units[0], wt_scale, "softmax", reg, r_seed, verbose)
+
+        self.layers.append(conv2D_layer)
+        self.layers.append(maxPool_layer)
+        self.layers.append(flatten_layer)
+        self.layers.append(hidden_layer)
+        self.layers.append(output_layer)
